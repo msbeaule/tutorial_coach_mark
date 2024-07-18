@@ -254,13 +254,7 @@ class AnimatedStaticFocusLightState extends AnimatedFocusLightState {
           _progressAnimated = _curvedAnimation.value;
           return Stack(
             children: <Widget>[
-              SizedBox(
-                width: double.maxFinite,
-                height: double.maxFinite,
-                child: CustomPaint(
-                  painter: _getPainter(_targetFocus),
-                ),
-              ),
+              _getLightPaint(_targetFocus),
               Positioned(
                 left: left,
                 top: top,
@@ -284,6 +278,47 @@ class AnimatedStaticFocusLightState extends AnimatedFocusLightState {
         },
       ),
     );
+  }
+
+  Widget _getLightPaint(TargetFocus targetFocus) {
+    if (widget.imageFilter != null) {
+      return ClipPath(
+        clipper: _getClipper(targetFocus.shape),
+        child: BackdropFilter(
+          filter: widget.imageFilter!,
+          child: _getSizedPainter(targetFocus),
+        ),
+      );
+    } else {
+      return _getSizedPainter(targetFocus);
+    }
+  }
+
+  SizedBox _getSizedPainter(TargetFocus targetFocus) {
+    return SizedBox(
+      width: double.maxFinite,
+      height: double.maxFinite,
+      child: CustomPaint(
+        painter: _getPainter(targetFocus),
+      ),
+    );
+  }
+
+  CustomClipper<Path> _getClipper(ShapeLightFocus? shape) {
+    return shape == ShapeLightFocus.RRect
+        ? RectClipper(
+            progress: _progressAnimated,
+            offset: _getPaddingFocus(),
+            target: _targetPosition ?? TargetPosition(Size.zero, Offset.zero),
+            radius: _targetFocus.radius ?? 0,
+            borderSide: _targetFocus.borderSide,
+          )
+        : CircleClipper(
+            _progressAnimated,
+            _positioned,
+            _sizeCircle,
+            _targetFocus.borderSide,
+          );
   }
 
   @override
@@ -485,6 +520,7 @@ class AnimatedPulseFocusLightState extends AnimatedFocusLightState {
     );
   }
 
+  // TODO: is it this?
   Widget _getLightPaint(TargetFocus targetFocus) {
     if (widget.imageFilter != null) {
       return ClipPath(
